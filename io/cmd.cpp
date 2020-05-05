@@ -98,7 +98,7 @@ bool CMD::decode(QByteArray data)
     if(data.size() < index + 4) {
         return false;
     }
-    m_tag = (data[index+3] << 24) | (data[index+2] << 16) | (data[index+1] << 8) | data[index];
+    m_tag = (static_cast<uchar>(data[index+3]) << 24) | (static_cast<uchar>(data[index+2]) << 16) | (static_cast<uchar>(data[index+1]) << 8) | static_cast<uchar>(data[index]);
     index += 4;
     int datalen;
     int lenlen = get_length_buffer(data.mid(index), datalen);

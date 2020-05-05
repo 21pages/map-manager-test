@@ -64,7 +64,7 @@ void Client::connections()
 
 void Client::handleMessageReceived(const QByteArray &message, const QMqttTopicName &topic)
 {
-    QString recvTopic = QString("%1/%1").arg(TOPIC_ARM).arg(TOPIC_SELF);
+    QString recvTopic = QString("%1/%2").arg(TOPIC_ARM).arg(TOPIC_SELF);
     if(topic.name() == recvTopic) {
         CMD cmd;
         bool ret = cmd.decode(message);
