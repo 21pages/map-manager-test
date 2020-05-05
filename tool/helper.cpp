@@ -26,3 +26,14 @@ QByteArray Helper::S2B(const QString &str)
     QString str3 = str2.replace(" ", "").trimmed();
     return QByteArray::fromHex(str.toLatin1());
 }
+
+void  Helper::recursivelyDelTreeItem(QTreeWidgetItem *item)
+{
+    while(QTreeWidgetItem *childItem = item->takeChild(0)) {
+        if(childItem->childCount() > 0) {
+            recursivelyDelTreeItem(childItem);
+        } else {
+            delete childItem;
+        }
+    }
+}

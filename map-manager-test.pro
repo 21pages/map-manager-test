@@ -27,7 +27,6 @@ HEADERS  += mainwindow.h \
 include(widgets/widgets.pri)
 include(io/io.pri)
 include(tool/tool.pri)
-include(task/task.pri)
 
 RESOURCES += \
     img.qrc

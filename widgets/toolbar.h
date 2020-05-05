@@ -20,28 +20,17 @@ private:
     void connections();
     void on_client_state_changed(QMqttClient::ClientState state);
     void on_btn_conn_clicked();
-    void on_btn_extend_clicked();
-    void on_checkbox_userpwd_clicked();
-    void on_checkbox_will_clicked();
+    void on_choose_btn_clicked();
     void setState(bool disconnect);
+signals:
+    void sig_start();
+    void sig_stop();
+    void sig_choose();
 private:
     QLineEdit *m_lineEdit_ip;
     QSpinBox *m_spinBox_port;
-    QComboBox *m_comboBox_ver;
-    QPushButton *m_btn_conn;
-    QPushButton *m_btn_extend;
-    QFrame *m_frame_extend;
-    QCheckBox *m_checkBox_userpwd;
-    QLineEdit *m_lineEdit_user;
-    QLineEdit *m_lineEdit_pwd;
-    QCheckBox *m_checkBox_cleanSession;
-    QCheckBox *m_checkBox_will;
-    QLineEdit *m_lineEdit_willTopic;
-    QComboBox *m_comboBox_willQoS;
-    QLineEdit *m_lineEdit_willMessage;
-    QCheckBox *m_checkBox_willMessageHex;
-    QCheckBox *m_checkBox_willRetain;
-
+    QPushButton *m_btn_choose;
+    QPushButton *m_btn_start;
 private:
     Client *m_client;
 

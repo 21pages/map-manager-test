@@ -8,7 +8,6 @@
 #include "client.h"
 #include "toolbar.h"
 #include "taskwidget.h"
-#include "messagewidget.h"
 
 class MainWindow : public QMainWindow
 {
@@ -25,8 +24,7 @@ private:
     QMenuBar *m_menuBar;
     ToolBar *m_toolBar;
     QTabWidget *m_tab;
-    TaskWidget *m_publish;
-    MessageWidget *m_message;
+    TaskWidget *m_task;
 private:
     Client *m_client;
 };

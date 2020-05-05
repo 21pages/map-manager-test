@@ -3,6 +3,18 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QDateTime>
+#include <QHeaderView>
+#include <QIcon>
+#include "helper.h"
+#include "choosedialog.h"
+#include "mainwindow.h"
+
+
+struct Test_Status {
+    uint16_t test;
+    int8_t running;
+    int32_t ret;
+};
 
 TaskWidget::TaskWidget(Client *client, QWidget *parent) : QWidget(parent)
 {
@@ -11,121 +23,96 @@ TaskWidget::TaskWidget(Client *client, QWidget *parent) : QWidget(parent)
     connections();
 }
 
+void TaskWidget::reInitTree()
+{
+    for(int i = 0; i < tree->topLevelItemCount(); i++) {
+        Helper::recursivelyDelTreeItem(tree->topLevelItem(i));
+    }
+    for(int i = 0; i < ChooseDialog::s_entries.size(); i++) {
+        uint16_t val = ChooseDialog::s_entries.at(i);
+        int type = val >> 8;
+        int id = val & 0xFF;
+        QTreeWidgetItem *top = tree->topLevelItem(type-1);
+        QTreeWidgetItem *item = new QTreeWidgetItem (top);
+        QStringList * pArr[] = {&ChooseDialog::s_function,
+                               &ChooseDialog::s_performance,
+                               &ChooseDialog::s_compatibility,
+                               &ChooseDialog::s_interface};
+        QStringList *pList = pArr[type-1];
+        item->setText(0, pList->at(id-1));
+        item->setIcon(1, QIcon());
+        item->setData(0,Qt::UserRole, val);
+    }
+
+}
+
+void TaskWidget::on_start()
+{
+    for(int i = 0; i < tree->topLevelItemCount(); i++) {
+        QTreeWidgetItem *item = tree->topLevelItem(i);
+        for(int j = 0; j < item->childCount(); j++) {
+            item->child(j)->setIcon(1,QIcon(":/img/wait.png"));
+        }
+    }
+}
+
 void TaskWidget::initView()
 {
-    QLabel *label_topic = new QLabel("主题:",this);
-    m_lineEdit_topic = new QLineEdit(this);
-    QLabel *label_message = new QLabel("消息:",this);
-    m_lineEdit_message = new QLineEdit(this);
-    m_checkBox_hex = new QCheckBox("16进制",this);
-    m_comboBox_qos = new QComboBox(this);
-    m_comboBox_qos->addItems(QStringList()<<"QoS 0"<<"QoS 1"<<"QoS 2");
-    m_checkBox_retain = new QCheckBox("retain",this);
-    m_btn_publish = new QPushButton("发布",this);
-    m_textEdit_log = new QTextEdit(this);
-    QHBoxLayout *hLayout_topic = new QHBoxLayout;
-    hLayout_topic->addWidget(label_topic);
-    hLayout_topic->addWidget(m_lineEdit_topic);
-    QHBoxLayout *hLayout_message = new QHBoxLayout;
-    hLayout_message->addWidget(label_message);
-    hLayout_message->addWidget(m_lineEdit_message);
-    hLayout_message->addWidget(m_checkBox_hex);
-    QHBoxLayout *hLayout3 = new QHBoxLayout;
-    hLayout3->addWidget(m_comboBox_qos);
-    hLayout3->addWidget(m_checkBox_retain);
-    hLayout3->addWidget(m_btn_publish);
-    m_btn_publish->setEnabled(false);
+    tree = new QTreeWidget(this);
+    tree->setHeaderLabels(QStringList()<<"测试项"<<"测试进度");
+    tree->header()->setSectionResizeMode(QHeaderView::Stretch);
+    QStringList list;
+    list<<"功能测试"<<"性能测试"<<"兼容性测试"<<"接口测试";
+    for(int i = 0; i < list.size(); i++) {
+        QTreeWidgetItem *item = new QTreeWidgetItem(tree);
+        item->setText(0, list.at(i));
+        item->setExpanded(true);
+    }
     QVBoxLayout *vLayout = new QVBoxLayout;
-    vLayout->addLayout(hLayout_topic);
-    vLayout->addLayout(hLayout_message);
-    vLayout->addLayout(hLayout3);
-    vLayout->addWidget(m_textEdit_log);
+    vLayout->addWidget(tree);
     setLayout(vLayout);
-
 }
 
 void TaskWidget::connections()
 {
-    connect(m_client->in(),&QMqttClient::stateChanged,this,&TaskWidget::on_state_changed);
-    connect(m_btn_publish, &QPushButton::clicked,this,&TaskWidget::on_btn_publish_clicked);
-    connect(this,&TaskWidget::sig_publish_one,this,&TaskWidget::on_log_publish);
-    qRegisterMetaType<PublishItem*>();
-    connect(m_client->in(), &QMqttClient::messageStatusChanged,this,&TaskWidget::handleMessageStatusChanged);
+    connect(m_client, &Client::sig_test_status, this, &TaskWidget::on_recv_test_status);
 }
 
-void TaskWidget::on_btn_publish_clicked()
+void TaskWidget::setIcon(uint16_t test, QString iconfile)
 {
-    QString topic = m_lineEdit_topic->text();
-    QByteArray msgByte;
-    QString msgStr = m_lineEdit_message->text();
-    PublishItem::DataType type;
-    if(m_checkBox_hex->isChecked()) {
-        QString msgStrhex  = msgStr.replace(" ", "").trimmed();
-        msgByte = QByteArray::fromHex(msgStrhex.toLatin1());
-        type = PublishItem::DataType::hex;
+    int type = test >> 8;
+    if(type <1 || type > 4) {
+        return;
+    }
+    QTreeWidgetItem *top = tree->topLevelItem(type-1);
+    for(int i = 0; i < top->childCount(); i++) {
+        QTreeWidgetItem *item = top->child(i);
+        if(item->data(0, Qt::UserRole).toInt() == test) {
+            item->setIcon(1, QIcon(iconfile));
+        }
+    }
+}
+
+void TaskWidget::on_recv_test_status(QByteArray payload)
+{
+    if(payload.size() != sizeof(Test_Status)) {
+        return;
+    }
+    char *data = payload.data();
+    Test_Status report;
+    memcpy(&report, data, sizeof(Test_Status));
+
+    QString iconfile;
+    if(report.running) {
+        iconfile = ":/img/run.png";
     } else {
-        msgByte = msgStr.toUtf8();
-        type = PublishItem::DataType::string;
+        if(report.ret == 0) {
+            iconfile = ":/img/ok.png";
+        } else {
+            iconfile = ":/img/failure.png";
+        }
     }
-    quint8 qos = static_cast<quint8>(m_comboBox_qos->currentIndex());
-    bool retain = m_checkBox_retain->isChecked();
-    qint32 ret = m_client->in()->publish(QMqttTopicName(topic),  \
-                            msgByte,\
-                            qos,\
-                            retain);
-    QSharedPointer<PublishItem> item = QSharedPointer<PublishItem>(new PublishItem(topic,msgByte,type,qos,retain,ret));
-    m_publishPointerList.append(item);
-//    PublishItem *item = new PublishItem(topic,msgByte,type,qos,retain,ret);
-//    PublishItem item(topic,msgByte,type,qos,retain,ret);
-    emit sig_publish_one(item.get());
+    setIcon(report.test, iconfile);
+
 }
 
-void TaskWidget::on_state_changed(QMqttClient::ClientState state)
-{
-    switch (state) {
-    case QMqttClient::ClientState::Connected:
-        m_btn_publish->setEnabled(true);
-        break;
-    default:
-        m_btn_publish->setEnabled(false);
-        break;
-    }
-}
-
-void TaskWidget::handleMessageStatusChanged(qint32 id, QMqtt::MessageStatus s, const QMqttMessageStatusProperties &properties)
-{
-    QString timeStr = QDateTime::currentDateTime().toString("HH:mm:ss zzz");
-    QString msgStr;
-    switch (s) {
-    case QMqtt::MessageStatus::Published:
-        msgStr = "PUBLISH";
-        break;
-    case QMqtt::MessageStatus::Acknowledged:
-        msgStr = "PUBACK";
-        break;
-    case QMqtt::MessageStatus::Received:
-        msgStr = "PUBREC";
-        break;
-    case QMqtt::MessageStatus::Released:
-        msgStr = "PUBREL";
-        break;
-    case QMqtt::MessageStatus::Completed:
-        msgStr = "PUBCOMP";
-        break;
-    default:
-        break;
-    }
-    m_textEdit_log->append(timeStr + " recv " + msgStr);
-}
-
-void TaskWidget::on_log_publish(PublishItem *item)
-{
-    QString dataStr;
-    if(item->type == PublishItem::DataType::hex) {
-        dataStr = QString::fromUtf8(item->data.toHex().toUpper());
-    } else {
-        dataStr = item->data;
-    }
-    QString timeStr = QDateTime::currentDateTime().toString("HH:mm:ss zzz");
-    m_textEdit_log->append(timeStr + " send " +  dataStr);
-}

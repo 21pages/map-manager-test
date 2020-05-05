@@ -25,10 +25,9 @@ void MainWindow::initView()
     addToolBar(Qt::TopToolBarArea,m_toolBar);
     m_tab = new QTabWidget(this);
     setCentralWidget(m_tab);
-    m_publish = new TaskWidget(m_client,this);
-    m_tab->addTab(m_publish,"发布");
-    m_message = new MessageWidget(m_client,this);
-    m_tab->addTab(m_message,"日志");
+    m_task = new TaskWidget(m_client,this);
+    m_tab->addTab(m_task,"测试");
+    resize(600,600);
 }
 
 void MainWindow::initData()
@@ -38,5 +37,6 @@ void MainWindow::initData()
 
 void MainWindow::connections()
 {
-    connect(m_publish,&TaskWidget::sig_publish_one,m_message,&MessageWidget::slot_publish_one);
+    connect(m_toolBar, &ToolBar::sig_choose, m_task, &TaskWidget::reInitTree);
+    connect(m_toolBar, &ToolBar::sig_start, m_task, &TaskWidget::on_start);
 }

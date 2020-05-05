@@ -2,16 +2,13 @@
 #define CONTROLLER_H
 
 #include <QObject>
-#include "map_def.h"
+#include "client.h"
 
 class Controller : public QObject
 {
     Q_OBJECT
 public:
-    explicit Controller(QObject *parent = nullptr);
-
-public:
-    static QVector<TMAP_TASK*> sTasks;
+    explicit Controller(Client *client, QObject *parent = nullptr);
 
 };
 
