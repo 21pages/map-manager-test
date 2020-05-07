@@ -2,7 +2,7 @@
 #include "choosedialog.h"
 
 #define TOPIC_SELF "M-Desktop"
-#define TOPIC_ARM "M-AppMain"
+#define TOPIC_ARM "M-APP1"
 
 #define IID_CMD 0x9999
 #define IOP_CMD_START 0x0010
