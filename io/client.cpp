@@ -5,8 +5,8 @@
 #define TOPIC_ARM "M-APP1"
 
 #define IID_CMD 0x9999
-#define IOP_CMD_START 0x0010
-#define IOP_CMD_STATUS 0x0011
+#define IOP_CMD_START 0x0001
+#define IOP_CMD_STATUS 0x0002
 
 Client::Client(QObject *parent) : QObject(parent)
 {

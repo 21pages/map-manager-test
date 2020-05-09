@@ -18,7 +18,7 @@ void ToolBar::initView()
 {
     m_lineEdit_ip = new QLineEdit(this);
     m_lineEdit_ip->setInputMask("999.999.999.999;_");
-    m_lineEdit_ip->setText("127.0.0.1");
+    m_lineEdit_ip->setText("192.168.0.109");
     m_lineEdit_ip->setMaximumWidth(150);
     m_spinBox_port = new QSpinBox(this);
     m_spinBox_port->setPrefix("端口:");
