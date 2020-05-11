@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include <QMessageBox>
 
 MainWindow* MainWindow::smw = nullptr;
 
@@ -39,4 +40,14 @@ void MainWindow::connections()
 {
     connect(m_toolBar, &ToolBar::sig_choose, m_task, &TaskWidget::reInitTree);
     connect(m_toolBar, &ToolBar::sig_start, m_task, &TaskWidget::on_start);
+    connect(m_client, &Client::sig_start_ret, this, &MainWindow::on_start_ret);
+}
+
+void MainWindow::on_start_ret(int ret)
+{
+    if (-2 == ret) {
+        QMessageBox::warning(this, "失败", "启动超时!");
+    } else if(-1 == ret) {
+        QMessageBox::warning(this, "失败", "启动失败!");
+    }
 }

@@ -68,14 +68,18 @@ void TaskWidget::initView()
         item->setText(0, list.at(i));
         item->setExpanded(true);
     }
-    QVBoxLayout *vLayout = new QVBoxLayout;
-    vLayout->addWidget(tree);
-    setLayout(vLayout);
+    QHBoxLayout *hLayout = new QHBoxLayout;
+    edit = new QTextEdit(this);
+    hLayout->addWidget(tree);
+    hLayout->addWidget(edit);
+    edit->setVisible(false);
+    setLayout(hLayout);
 }
 
 void TaskWidget::connections()
 {
     connect(m_client, &Client::sig_test_status, this, &TaskWidget::on_recv_test_status);
+    connect(tree, &QTreeWidget::currentItemChanged, this, &TaskWidget::on_item_changed);
 }
 
 void TaskWidget::setIcon(uint16_t test, QString iconfile)
@@ -95,24 +99,51 @@ void TaskWidget::setIcon(uint16_t test, QString iconfile)
 
 void TaskWidget::on_recv_test_status(QByteArray payload)
 {
-    if(payload.size() != sizeof(Test_Status)) {
+    if(payload.size() < 3)
         return;
-    }
-    char *data = payload.data();
-    Test_Status report;
-    memcpy(&report, data, sizeof(Test_Status));
+    int index = 0;
+    int type = static_cast<quint8>(payload[index++]) + 1;
+    int id = static_cast<quint8>(payload[index++]) + 1;
+    int status = static_cast<quint8>(payload[index++]);
+    int test = type << 8 | id;
 
-    QString iconfile;
-    if(report.running) {
-        iconfile = ":/img/run.png";
-    } else {
-        if(report.ret == 0) {
-            iconfile = ":/img/ok.png";
+    if (0 == status) {
+        setIcon(test, ":/img/run.png");
+    } else if(1 == status) {
+        bool ret;
+        if(payload.size() < index + 1)
+            return;
+        ret = !!payload[index++];
+        if (ret) {
+            setIcon(test, ":/img/ok.png");
         } else {
-            iconfile = ":/img/failure.png";
+            setIcon(test, ":/img/failure.png");
+        }
+    } else if(2 == status) {
+        if(payload.size() < index + 1)
+            return;
+        Line line;
+        uint8_t color = static_cast<quint8>(payload[index++]);
+        if(color == 1) {
+            line.color = QColor("#d9455f");
+        } else if(color == 2){
+            line.color = QColor("#21bf73");
+        } else {
+            line.color = QColor("#000000");
+        }
+        int datalen;
+        int lenlen = CMD::get_length_buffer(payload.mid(index), datalen);
+        if(index + lenlen + datalen <= payload.size()) {
+            index += lenlen;
+            const char* visible = payload.mid(index, datalen).data();
+            line.text = QString(visible);
+            emit lineAdded(test);
         }
     }
-    setIcon(report.test, iconfile);
+}
 
+void TaskWidget::on_item_changed(QTreeWidgetItem *current, QTreeWidgetItem *previous)
+{
+//    uint16_t test
 }
 

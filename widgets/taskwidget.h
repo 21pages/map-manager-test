@@ -11,10 +11,15 @@
 #include <QScopedPointer>
 #include <QSharedPointer>
 #include <QDebug>
+#include <QTextEdit>
 #include "client.h"
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
 
+struct Line{
+    QColor color;
+    QString text;
+};
 
 class TaskWidget : public QWidget
 {
@@ -28,9 +33,14 @@ private:
     void connections();
     void setIcon(uint16_t test, QString iconfile);
     void on_recv_test_status(QByteArray payload);
+    void on_item_changed(QTreeWidgetItem *current, QTreeWidgetItem *previous);
+signals:
+    void lineAdded(uint16_t test);
 private:
     Client *m_client;
     QTreeWidget *tree;
+    QTextEdit *edit;
+    QHash<uint16_t, QVector<Line>> hash;
 };
 
 #endif // TASKWIDGET_H

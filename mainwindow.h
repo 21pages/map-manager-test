@@ -20,6 +20,7 @@ private:
     void initView();
     void initData();
     void connections();
+    void on_start_ret(int ret);
 private:
     QMenuBar *m_menuBar;
     ToolBar *m_toolBar;

@@ -50,7 +50,7 @@ static QByteArray set_length_buffer(int dataLen)
     return len;
 }
 
-static int get_length_buffer(QByteArray data, int &dataLen)
+int CMD::get_length_buffer(QByteArray data, int &dataLen)
 {
     uint8_t bySize;
     int lenlen = 0;

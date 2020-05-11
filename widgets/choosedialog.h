@@ -14,6 +14,11 @@ public:
     enum Tree_Item_Type
     {
         Type_User = QTreeWidgetItem::UserType,
+        Type_Root,
+        Type_Function_Parent,
+        Type_Performance_Parent,
+        Type_Compatibility_Parent,
+        Type_Interface_Parent,
         Type_Function,
         Type_Performance,
         Type_Compatibility,
@@ -27,6 +32,7 @@ public:
 private:
     void initView();
     void on_ok();
+    void onItemClicked(QTreeWidgetItem *item, int column);
 signals:
     void sig_choose();
 private:

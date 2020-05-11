@@ -16,6 +16,7 @@ public:
 public:
     void subscribe(bool flag);
     void send_start();
+    void recv_start(QByteArray payload);
 private:
     void connections();
     void handleMessageReceived(const QByteArray &message, const QMqttTopicName &topic);
@@ -23,8 +24,10 @@ private:
 signals:
     void sig_test_start(QByteArray payload);
     void sig_test_status(QByteArray payload);
+    void sig_start_ret(int ret);
 private:
     QMqttClient *m_client;
+    int start_ret;
 };
 
 #endif // CLIENT_H

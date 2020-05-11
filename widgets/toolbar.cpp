@@ -17,7 +17,7 @@ ToolBar::ToolBar(Client *client, QWidget *parent) : QToolBar(parent)
 void ToolBar::initView()
 {
     m_lineEdit_ip = new QLineEdit(this);
-    m_lineEdit_ip->setInputMask("999.999.999.999;_");
+    m_lineEdit_ip->setInputMask("999.999.999.999; ");
     m_lineEdit_ip->setText("192.168.0.109");
     m_lineEdit_ip->setMaximumWidth(150);
     m_spinBox_port = new QSpinBox(this);
@@ -42,7 +42,6 @@ void ToolBar::connections()
     connect(m_client->in(),&QMqttClient::stateChanged,this,&ToolBar::on_client_state_changed);
     connect(m_btn_start,&QPushButton::clicked,this,&ToolBar::on_btn_conn_clicked);
     connect(m_btn_choose, &QPushButton::clicked,this, &ToolBar::on_choose_btn_clicked);
-
 }
 
 void ToolBar::on_client_state_changed(QMqttClient::ClientState state)

@@ -11,6 +11,7 @@ public:
     CMD(const CMD& other);
     CMD& operator=(const CMD& other);
 public:
+    static int get_length_buffer(QByteArray data, int &dataLen);
     bool decode(QByteArray data);
     QByteArray encode();
     uint16_t iid();

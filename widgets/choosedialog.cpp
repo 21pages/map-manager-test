@@ -21,11 +21,15 @@ ChooseDialog::ChooseDialog(QWidget *parent) : QDialog(parent)
 void ChooseDialog::initView()
 {
     tree = new QTreeWidget(this);
-    QTreeWidgetItem *rootItem = new QTreeWidgetItem(tree, Type_User);
+    QTreeWidgetItem *rootItem = new QTreeWidgetItem(tree, Type_Root);
     rootItem->setText(0, "模组管理器测试项目");
     rootItem->setExpanded(true);
+    rootItem->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
+    rootItem->setCheckState(0, Qt::Checked);
 
-    QTreeWidgetItem *functionItem = new QTreeWidgetItem(rootItem, Type_User);
+    QTreeWidgetItem *functionItem = new QTreeWidgetItem(rootItem, Type_Function_Parent);
+    functionItem->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
+    functionItem->setCheckState(0, Qt::Checked);
     functionItem->setText(0, "功能测试");
     functionItem->setExpanded(true);
     for(int i = 0; i < s_function.size(); i++) {
@@ -35,7 +39,9 @@ void ChooseDialog::initView()
         item->setCheckState(0, Qt::Checked);
     }
 
-    QTreeWidgetItem *performanceItem = new QTreeWidgetItem(rootItem, Type_User);
+    QTreeWidgetItem *performanceItem = new QTreeWidgetItem(rootItem, Type_Performance_Parent);
+    performanceItem->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
+    performanceItem->setCheckState(0, Qt::Checked);
     performanceItem->setText(0, "性能测试");
     performanceItem->setExpanded(true);
     for(int i = 0; i < s_performance.size(); i++) {
@@ -45,7 +51,9 @@ void ChooseDialog::initView()
         item->setCheckState(0, Qt::Checked);
     }
 
-    QTreeWidgetItem *compatibilityItem = new QTreeWidgetItem(rootItem, Type_User);
+    QTreeWidgetItem *compatibilityItem = new QTreeWidgetItem(rootItem, Type_Compatibility_Parent);
+    compatibilityItem->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
+    compatibilityItem->setCheckState(0, Qt::Checked);
     compatibilityItem->setText(0, "兼容性测试");
     compatibilityItem->setExpanded(true);
     for(int i = 0; i < s_compatibility.size(); i++) {
@@ -55,7 +63,9 @@ void ChooseDialog::initView()
         item->setCheckState(0, Qt::Checked);
     }
 
-    QTreeWidgetItem *interfaceItem = new QTreeWidgetItem(rootItem, Type_User);
+    QTreeWidgetItem *interfaceItem = new QTreeWidgetItem(rootItem, Type_Interface_Parent);
+    interfaceItem->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
+    interfaceItem->setCheckState(0, Qt::Checked);
     interfaceItem->setText(0, "接口测试");
     interfaceItem->setExpanded(true);
     for(int i = 0; i < s_interface.size(); i++) {
@@ -82,6 +92,8 @@ void ChooseDialog::initView()
     resize(400,600);
     setWindowTitle("选择测试项目");
 
+    connect(tree, &QTreeWidget::itemClicked, this, &ChooseDialog::onItemClicked);
+
 }
 
 void ChooseDialog::on_ok()
@@ -99,4 +111,32 @@ void ChooseDialog::on_ok()
     }
     emit sig_choose();
     close();
+}
+
+void ChooseDialog::onItemClicked(QTreeWidgetItem *item, int column)
+{
+    if(column != 0) {
+        return;
+    }
+    int type = item->type();
+    switch (type) {
+    case Type_Root:{
+            QTreeWidgetItemIterator it(item);
+            while (*it) {
+                  (*it)->setCheckState(0, item->checkState(0));
+                  ++it;
+            }
+    }
+        break;
+    case Type_Function_Parent:
+    case Type_Performance_Parent:
+    case Type_Compatibility_Parent:
+    case Type_Interface_Parent:
+    {
+        for(int i = 0; i < item->childCount(); i++) {
+            item->child(i)->setCheckState(0, item->checkState(0));
+        }
+    }
+        break;
+    }
 }

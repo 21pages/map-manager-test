@@ -1,4 +1,5 @@
 #include "client.h"
+#include <QTimer>
 #include "choosedialog.h"
 
 #define TOPIC_SELF "M-Desktop"
@@ -49,12 +50,42 @@ void Client::send_start()
 {
     CMD cmd;
     cmd.m_tag = (IID_CMD << 16) | IOP_CMD_START;
+
+    uint32_t arr[4] = {0};
     for(int i = 0; i < ChooseDialog::s_entries.size(); i++) {
         uint16_t val = ChooseDialog::s_entries.at(i);
-        cmd.m_msg_payload.append(val>>8);
-        cmd.m_msg_payload.append(val);
+        arr[val >> 8]  |= (1 << ((val & 0xFF) - 1));
+    }
+    int valid = 0;
+    for (int i = 0; i < 4; i++) {
+        if(arr[i] != 0) {
+            valid++;
+        }
+    }
+    cmd.m_msg_payload.append(static_cast<quint8>(valid));
+    for(int i = 0; i < 4; i++) {
+        if(arr[i] != 0) {
+            cmd.m_msg_payload.append(static_cast<quint8>(i));
+            cmd.m_msg_payload.append(static_cast<quint8>(arr[i] >> 24));
+            cmd.m_msg_payload.append(static_cast<quint8>(arr[i] >> 16));
+            cmd.m_msg_payload.append(static_cast<quint8>(arr[i] >> 8));
+            cmd.m_msg_payload.append(static_cast<quint8>(arr[i] >> 0));
+        }
     }
     publish_cmd(cmd);
+    start_ret = -2;
+    QTimer::singleShot(1000, [&](){
+       emit sig_start_ret(start_ret);
+    });
+}
+
+void Client::recv_start(QByteArray payload)
+{
+    if(payload.size() == 1 && static_cast<quint8>(payload[0]) == 1) {
+        start_ret = 0;
+    } else {
+        start_ret = -1;
+    }
 }
 
 void Client::connections()
@@ -72,6 +103,7 @@ void Client::handleMessageReceived(const QByteArray &message, const QMqttTopicNa
             if(cmd.iid() == IID_CMD) {
                 switch (cmd.iop()) {
                     case IOP_CMD_START:
+                        recv_start(cmd.m_msg_payload);
                         break;
                     case IOP_CMD_STATUS:
                         emit sig_test_status(cmd.m_msg_payload);
