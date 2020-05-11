@@ -12,14 +12,11 @@
 #include <QSharedPointer>
 #include <QDebug>
 #include <QTextEdit>
-#include "client.h"
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
+#include "client.h"
+#include "logwidget.h"
 
-struct Line{
-    QColor color;
-    QString text;
-};
 
 class TaskWidget : public QWidget
 {
@@ -31,16 +28,18 @@ public:
 private:
     void initView();
     void connections();
-    void setIcon(uint16_t test, QString iconfile);
+    void setIcon(uint16_t test, int icon);
     void on_recv_test_status(QByteArray payload);
-    void on_item_changed(QTreeWidgetItem *current, QTreeWidgetItem *previous);
+    void on_item_clicked(QTreeWidgetItem *item, int column);
+    void on_log(QByteArray payload);
 signals:
     void lineAdded(uint16_t test);
+    void sig_finished();
 private:
     Client *m_client;
     QTreeWidget *tree;
-    QTextEdit *edit;
-    QHash<uint16_t, QVector<Line>> hash;
+    LogWidget *edit;
+    uint16_t cur_run_test;
 };
 
 #endif // TASKWIDGET_H

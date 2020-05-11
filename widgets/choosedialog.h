@@ -11,19 +11,7 @@ class ChooseDialog : public QDialog
     Q_OBJECT
 public:
     explicit ChooseDialog(QWidget *parent = nullptr);
-    enum Tree_Item_Type
-    {
-        Type_User = QTreeWidgetItem::UserType,
-        Type_Root,
-        Type_Function_Parent,
-        Type_Performance_Parent,
-        Type_Compatibility_Parent,
-        Type_Interface_Parent,
-        Type_Function,
-        Type_Performance,
-        Type_Compatibility,
-        Type_Interface,
-    };
+    static QString test2name(uint16_t test);
     static QVector<uint16_t> s_entries;
     static QStringList s_function;
     static QStringList s_performance;

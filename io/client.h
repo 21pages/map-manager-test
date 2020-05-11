@@ -25,6 +25,7 @@ signals:
     void sig_test_start(QByteArray payload);
     void sig_test_status(QByteArray payload);
     void sig_start_ret(int ret);
+    void sig_log(QByteArray payload);
 private:
     QMqttClient *m_client;
     int start_ret;

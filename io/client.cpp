@@ -8,6 +8,7 @@
 #define IID_CMD 0x9999
 #define IOP_CMD_START 0x0001
 #define IOP_CMD_STATUS 0x0002
+#define IOP_CMD_LOG 0x0003
 
 Client::Client(QObject *parent) : QObject(parent)
 {
@@ -108,6 +109,9 @@ void Client::handleMessageReceived(const QByteArray &message, const QMqttTopicNa
                         break;
                     case IOP_CMD_STATUS:
                         emit sig_test_status(cmd.m_msg_payload);
+                        break;
+                    case IOP_CMD_LOG:
+                        emit sig_log(cmd.m_msg_payload);
                         break;
                 }
             }

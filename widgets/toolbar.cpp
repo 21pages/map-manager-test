@@ -4,6 +4,7 @@
 #include <QLabel>
 #include <QThread>
 #include <QTimer>
+#include <QMessageBox>
 #include "choosedialog.h"
 #include "helper.h"
 
@@ -88,9 +89,11 @@ void ToolBar::on_btn_conn_clicked()
 
 void ToolBar::on_choose_btn_clicked()
 {
-    ChooseDialog dlg(this);
-    connect(&dlg, &ChooseDialog::sig_choose, this, &ToolBar::sig_choose);
-    dlg.exec();
+    if(!choose) {
+        choose = new ChooseDialog(this);
+        connect(choose, &ChooseDialog::sig_choose, this, &ToolBar::sig_choose);
+    }
+    choose->exec();
 }
 
 void ToolBar::setState(bool disconnect)
@@ -107,4 +110,13 @@ void ToolBar::setState(bool disconnect)
             m_client->send_start();
         });
     }
+}
+
+void ToolBar::on_finish()
+{
+    if(m_btn_start->text() == "停止测试") {
+        m_btn_start->click();
+    }
+    QMessageBox::information(nullptr, "提示", "测试完成");
+
 }

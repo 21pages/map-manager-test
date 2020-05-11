@@ -24,11 +24,10 @@ void MainWindow::initView()
     setMenuBar(m_menuBar);
     m_toolBar = new ToolBar(m_client,this);
     addToolBar(Qt::TopToolBarArea,m_toolBar);
-    m_tab = new QTabWidget(this);
-    setCentralWidget(m_tab);
     m_task = new TaskWidget(m_client,this);
-    m_tab->addTab(m_task,"测试");
+    setCentralWidget(m_task);
     resize(600,600);
+    setWindowTitle("模组管理器测试程序");
 }
 
 void MainWindow::initData()
@@ -41,6 +40,7 @@ void MainWindow::connections()
     connect(m_toolBar, &ToolBar::sig_choose, m_task, &TaskWidget::reInitTree);
     connect(m_toolBar, &ToolBar::sig_start, m_task, &TaskWidget::on_start);
     connect(m_client, &Client::sig_start_ret, this, &MainWindow::on_start_ret);
+    connect(m_task, &TaskWidget::sig_finished, m_toolBar, &ToolBar::on_finish);
 }
 
 void MainWindow::on_start_ret(int ret)

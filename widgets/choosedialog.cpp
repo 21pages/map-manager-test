@@ -13,9 +13,36 @@ QStringList ChooseDialog::s_performance = QStringList()<<"并发请求" << "快�
 QStringList ChooseDialog::s_compatibility = QStringList()<< "共存性" << "互换性" << "配置文件读取" << "驱动接口兼容";
 QStringList ChooseDialog::s_interface = QStringList()<< "通用消息接口" << "系统管理器消息接口" << "模组管理接口";
 
+enum Tree_Item_Type
+{
+    Type_User = QTreeWidgetItem::UserType,
+    Type_Root,
+    Type_Function_Parent,
+    Type_Performance_Parent,
+    Type_Compatibility_Parent,
+    Type_Interface_Parent,
+    Type_Function,
+    Type_Performance,
+    Type_Compatibility,
+    Type_Interface,
+};
+
 ChooseDialog::ChooseDialog(QWidget *parent) : QDialog(parent)
 {
     initView();
+}
+
+QString ChooseDialog::test2name(uint16_t test)
+{
+    int type = test >> 8;
+    int id = test & 0xFF;
+    QStringList *pList[] = {&s_function, &s_performance, &s_compatibility, &s_interface};
+    if(type < 4) {
+        if(id < pList[type]->size()) {
+            return pList[type]->at(id);
+        }
+    }
+    return "";
 }
 
 void ChooseDialog::initView()

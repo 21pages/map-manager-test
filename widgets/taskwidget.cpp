@@ -5,15 +5,15 @@
 #include <QDateTime>
 #include <QHeaderView>
 #include <QIcon>
+#include <QSplitter>
 #include "helper.h"
 #include "choosedialog.h"
 #include "mainwindow.h"
 
 
-struct Test_Status {
-    uint16_t test;
-    int8_t running;
-    int32_t ret;
+enum Tree_Item_Type
+{
+    Type_User = QTreeWidgetItem::UserType,
 };
 
 TaskWidget::TaskWidget(Client *client, QWidget *parent) : QWidget(parent)
@@ -33,7 +33,7 @@ void TaskWidget::reInitTree()
         int type = val >> 8;
         int id = val & 0xFF;
         QTreeWidgetItem *top = tree->topLevelItem(type);
-        QTreeWidgetItem *item = new QTreeWidgetItem (top);
+        QTreeWidgetItem *item = new QTreeWidgetItem (top, Type_User);
         QStringList * pArr[] = {&ChooseDialog::s_function,
                                &ChooseDialog::s_performance,
                                &ChooseDialog::s_compatibility,
@@ -54,6 +54,7 @@ void TaskWidget::on_start()
             item->child(j)->setIcon(1,QIcon(":/img/wait.png"));
         }
     }
+    edit->on_start();
 }
 
 void TaskWidget::initView()
@@ -68,24 +69,46 @@ void TaskWidget::initView()
         item->setText(0, list.at(i));
         item->setExpanded(true);
     }
+    edit = new LogWidget(this);
+    QSplitter *split = new QSplitter(this);
+    split->addWidget(tree);
+    split->addWidget(edit);
     QHBoxLayout *hLayout = new QHBoxLayout;
-    edit = new QTextEdit(this);
-    hLayout->addWidget(tree);
-    hLayout->addWidget(edit);
-    edit->setVisible(false);
+    hLayout->addWidget(split);
     setLayout(hLayout);
 }
 
 void TaskWidget::connections()
 {
     connect(m_client, &Client::sig_test_status, this, &TaskWidget::on_recv_test_status);
-    connect(tree, &QTreeWidget::currentItemChanged, this, &TaskWidget::on_item_changed);
+    connect(tree, &QTreeWidget::itemClicked, this, &TaskWidget::on_item_clicked);
+    connect(m_client, &Client::sig_log, this, &TaskWidget::on_log);
 }
 
-void TaskWidget::setIcon(uint16_t test, QString iconfile)
+enum ICON_SOURCE {
+    ICON_SOURCE_RUN,
+    ICON_SOURCE_OK,
+    ICON_SOURCE_FAIL,
+};
+
+void TaskWidget::setIcon(uint16_t test, int icon)
 {
     int type = test >> 8;
     if(type >= 4) {
+        return;
+    }
+    QString iconfile;
+    switch (icon) {
+    case ICON_SOURCE_RUN:
+        iconfile = ":/img/run.png";
+        break;
+    case ICON_SOURCE_OK:
+        iconfile = ":/img/ok.png";
+        break;
+    case ICON_SOURCE_FAIL:
+        iconfile = ":/img/failure.png";
+        break;
+    default:
         return;
     }
     QTreeWidgetItem *top = tree->topLevelItem(type);
@@ -93,6 +116,9 @@ void TaskWidget::setIcon(uint16_t test, QString iconfile)
         QTreeWidgetItem *item = top->child(i);
         if(item->data(0, Qt::UserRole).toInt() == test) {
             item->setIcon(1, QIcon(iconfile));
+            if(i == top->childCount()-1 && icon != ICON_SOURCE_RUN) {
+                emit sig_finished();
+            }
         }
     }
 }
@@ -105,45 +131,49 @@ void TaskWidget::on_recv_test_status(QByteArray payload)
     int type = static_cast<quint8>(payload[index++]);
     int id = static_cast<quint8>(payload[index++]);
     int status = static_cast<quint8>(payload[index++]);
-    int test = type << 8 | id;
+    uint16_t test = type << 8 | id;
 
     if (0 == status) {
-        setIcon(test, ":/img/run.png");
+        setIcon(test, ICON_SOURCE_RUN);
+        edit->set_current_edit_key(test);
+        cur_run_test = test;
     } else if(1 == status) {
         bool ret;
         if(payload.size() < index + 1)
             return;
         ret = !!payload[index++];
         if (ret) {
-            setIcon(test, ":/img/ok.png");
+            setIcon(test, ICON_SOURCE_OK);
         } else {
-            setIcon(test, ":/img/failure.png");
-        }
-    } else if(2 == status) {
-        if(payload.size() < index + 1)
-            return;
-        Line line;
-        uint8_t color = static_cast<quint8>(payload[index++]);
-        if(color == 1) {
-            line.color = QColor("#d9455f");
-        } else if(color == 2){
-            line.color = QColor("#21bf73");
-        } else {
-            line.color = QColor("#000000");
-        }
-        int datalen;
-        int lenlen = CMD::get_length_buffer(payload.mid(index), datalen);
-        if(index + lenlen + datalen <= payload.size()) {
-            index += lenlen;
-            const char* visible = payload.mid(index, datalen).data();
-            line.text = QString(visible);
-            emit lineAdded(test);
+            setIcon(test, ICON_SOURCE_FAIL);
         }
     }
 }
 
-void TaskWidget::on_item_changed(QTreeWidgetItem *current, QTreeWidgetItem *previous)
+void TaskWidget::on_item_clicked(QTreeWidgetItem *item, int column)
 {
-//    uint16_t test
+    Q_UNUSED(column)
+    if(item->type() == Type_User) {
+        edit->set_current_edit_key(item->data(0, Qt::UserRole).toUInt());
+    }
 }
+
+void TaskWidget::on_log(QByteArray payload)
+{
+    int index = 0;
+    uint16_t test = cur_run_test;
+
+    if(payload.size() < index + 1)
+        return;
+    int datalen;
+    int lenlen = CMD::get_length_buffer(payload.mid(index), datalen);
+    if(index + lenlen + datalen <= payload.size()) {
+        index += lenlen;
+        const char* visible = payload.mid(index, datalen).data();
+        QString log = QString::fromLatin1(visible, datalen);
+        log = QDateTime::currentDateTime().toString("[HH:mm:ss]") + log;
+        edit->add_log(test, log);
+    }
+}
+
 
