@@ -102,7 +102,9 @@ void ToolBar::setState(bool disconnect)
     m_btn_start->setText(strBtn);
 
     m_client->subscribe(true);
-    QTimer::singleShot(1000, [&](){
-        m_client->send_start();
-    });
+    if(!disconnect) {
+        QTimer::singleShot(1000, [&](){
+            m_client->send_start();
+        });
+    }
 }

@@ -105,7 +105,7 @@ void ChooseDialog::on_ok()
         for(int j = 0; j < pItem->childCount(); j++) {
             QTreeWidgetItem *item = pItem->child(j);
             if(item->checkState(0) == Qt::Checked) {
-                s_entries.append(((i+1)<<8) | (j+1));
+                s_entries.append(((i)<<8) | (j));
             }
         }
     }

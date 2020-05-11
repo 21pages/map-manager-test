@@ -32,14 +32,14 @@ void TaskWidget::reInitTree()
         uint16_t val = ChooseDialog::s_entries.at(i);
         int type = val >> 8;
         int id = val & 0xFF;
-        QTreeWidgetItem *top = tree->topLevelItem(type-1);
+        QTreeWidgetItem *top = tree->topLevelItem(type);
         QTreeWidgetItem *item = new QTreeWidgetItem (top);
         QStringList * pArr[] = {&ChooseDialog::s_function,
                                &ChooseDialog::s_performance,
                                &ChooseDialog::s_compatibility,
                                &ChooseDialog::s_interface};
-        QStringList *pList = pArr[type-1];
-        item->setText(0, pList->at(id-1));
+        QStringList *pList = pArr[type];
+        item->setText(0, pList->at(id));
         item->setIcon(1, QIcon());
         item->setData(0,Qt::UserRole, val);
     }
@@ -85,10 +85,10 @@ void TaskWidget::connections()
 void TaskWidget::setIcon(uint16_t test, QString iconfile)
 {
     int type = test >> 8;
-    if(type <1 || type > 4) {
+    if(type >= 4) {
         return;
     }
-    QTreeWidgetItem *top = tree->topLevelItem(type-1);
+    QTreeWidgetItem *top = tree->topLevelItem(type);
     for(int i = 0; i < top->childCount(); i++) {
         QTreeWidgetItem *item = top->child(i);
         if(item->data(0, Qt::UserRole).toInt() == test) {
@@ -102,8 +102,8 @@ void TaskWidget::on_recv_test_status(QByteArray payload)
     if(payload.size() < 3)
         return;
     int index = 0;
-    int type = static_cast<quint8>(payload[index++]) + 1;
-    int id = static_cast<quint8>(payload[index++]) + 1;
+    int type = static_cast<quint8>(payload[index++]);
+    int id = static_cast<quint8>(payload[index++]);
     int status = static_cast<quint8>(payload[index++]);
     int test = type << 8 | id;
 

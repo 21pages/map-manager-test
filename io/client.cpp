@@ -54,7 +54,8 @@ void Client::send_start()
     uint32_t arr[4] = {0};
     for(int i = 0; i < ChooseDialog::s_entries.size(); i++) {
         uint16_t val = ChooseDialog::s_entries.at(i);
-        arr[val >> 8]  |= (1 << ((val & 0xFF) - 1));
+
+        arr[val >> 8]  |= (1 << (val & 0xFF));
     }
     int valid = 0;
     for (int i = 0; i < 4; i++) {
