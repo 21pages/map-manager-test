@@ -18,6 +18,7 @@ class ToolBar : public QToolBar
 public:
     explicit ToolBar(Client *client,QWidget *parent = nullptr);
     void on_finish();
+    void stop();
 private:
     void initView();
     void connections();

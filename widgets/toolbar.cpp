@@ -120,3 +120,10 @@ void ToolBar::on_finish()
     QMessageBox::information(nullptr, "提示", "测试完成");
 
 }
+
+void ToolBar::stop()
+{
+    if(m_btn_start->text() == "停止测试") {
+        m_btn_start->click();
+    }
+}

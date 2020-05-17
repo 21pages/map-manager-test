@@ -6,5 +6,6 @@
         <file>img/ok.png</file>
         <file>img/run.png</file>
         <file>img/wait.png</file>
+        <file>img/skip.png</file>
     </qresource>
 </RCC>

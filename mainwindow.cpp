@@ -26,7 +26,7 @@ void MainWindow::initView()
     addToolBar(Qt::TopToolBarArea,m_toolBar);
     m_task = new TaskWidget(m_client,this);
     setCentralWidget(m_task);
-    resize(600,600);
+    resize(900,600);
     setWindowTitle("模组管理器测试程序");
 }
 
@@ -45,6 +45,9 @@ void MainWindow::connections()
 
 void MainWindow::on_start_ret(int ret)
 {
+    if(0 != ret) {
+        m_toolBar->stop();
+    }
     if (-2 == ret) {
         QMessageBox::warning(this, "失败", "启动超时!");
     } else if(-1 == ret) {

@@ -14,9 +14,14 @@ LogWidget::LogWidget(QWidget *parent) : QWidget(parent)
     vLayout->addWidget(label);
     vLayout->addWidget(edit);
     setLayout(vLayout);
+    QFont font = edit->font();
+    font.setPointSize(14);
+    edit->setFont(font);
+    label->setFont(font);
+    label->setAlignment(Qt::AlignCenter);
 }
 
-void LogWidget::on_start()
+void LogWidget::on_choose()
 {
     QMutexLocker lock(&mutex);
     cur_test = -1;
@@ -26,7 +31,12 @@ void LogWidget::on_start()
     edit->clear();
 }
 
-void LogWidget::set_current_edit_key(uint8_t test)
+void LogWidget::on_start()
+{
+    on_choose();
+}
+
+void LogWidget::set_current_edit_key(uint16_t test)
 {
     QMutexLocker lock(&mutex);
     if(cur_test != test) {

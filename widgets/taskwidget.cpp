@@ -25,14 +25,29 @@ TaskWidget::TaskWidget(Client *client, QWidget *parent) : QWidget(parent)
 
 void TaskWidget::reInitTree()
 {
-    for(int i = 0; i < tree->topLevelItemCount(); i++) {
-        Helper::recursivelyDelTreeItem(tree->topLevelItem(i));
+    while(tree->topLevelItemCount()) {
+        QTreeWidgetItem *item = tree->takeTopLevelItem(0);
+        Helper::recursivelyDelTreeItem(item);
+        delete  item;
     }
+    QStringList list;
+    list<<"功能测试"<<"性能测试"<<"兼容性测试"<<"接口测试";
+
+    int last_type = -1;
     for(int i = 0; i < ChooseDialog::s_entries.size(); i++) {
         uint16_t val = ChooseDialog::s_entries.at(i);
         int type = val >> 8;
         int id = val & 0xFF;
-        QTreeWidgetItem *top = tree->topLevelItem(type);
+        QTreeWidgetItem *top;
+        if(type != last_type) {
+            last_type = type;
+            top = new QTreeWidgetItem(tree);
+            top->setText(0, list.at(type));
+            top->setExpanded(true);
+        } else {
+            top = tree->topLevelItem(tree->topLevelItemCount() - 1);
+        }
+
         QTreeWidgetItem *item = new QTreeWidgetItem (top, Type_User);
         QStringList * pArr[] = {&ChooseDialog::s_function,
                                &ChooseDialog::s_performance,
@@ -43,7 +58,7 @@ void TaskWidget::reInitTree()
         item->setIcon(1, QIcon());
         item->setData(0,Qt::UserRole, val);
     }
-
+    edit->on_choose();
 }
 
 void TaskWidget::on_start()
@@ -62,13 +77,13 @@ void TaskWidget::initView()
     tree = new QTreeWidget(this);
     tree->setHeaderLabels(QStringList()<<"测试项"<<"测试进度");
     tree->header()->setSectionResizeMode(QHeaderView::Stretch);
-    QStringList list;
-    list<<"功能测试"<<"性能测试"<<"兼容性测试"<<"接口测试";
-    for(int i = 0; i < list.size(); i++) {
-        QTreeWidgetItem *item = new QTreeWidgetItem(tree);
-        item->setText(0, list.at(i));
-        item->setExpanded(true);
-    }
+//    QStringList list;
+//    list<<"功能测试"<<"性能测试"<<"兼容性测试"<<"接口测试";
+//    for(int i = 0; i < list.size(); i++) {
+//        QTreeWidgetItem *item = new QTreeWidgetItem(tree);
+//        item->setText(0, list.at(i));
+//        item->setExpanded(true);
+//    }
     edit = new LogWidget(this);
     QSplitter *split = new QSplitter(this);
     split->addWidget(tree);
@@ -76,6 +91,7 @@ void TaskWidget::initView()
     QHBoxLayout *hLayout = new QHBoxLayout;
     hLayout->addWidget(split);
     setLayout(hLayout);
+    split->setSizes(QList<int>()<<300<<600);
 }
 
 void TaskWidget::connections()
@@ -89,6 +105,7 @@ enum ICON_SOURCE {
     ICON_SOURCE_RUN,
     ICON_SOURCE_OK,
     ICON_SOURCE_FAIL,
+    ICON_SOURCE_SKIP,
 };
 
 void TaskWidget::setIcon(uint16_t test, int icon)
@@ -108,16 +125,23 @@ void TaskWidget::setIcon(uint16_t test, int icon)
     case ICON_SOURCE_FAIL:
         iconfile = ":/img/failure.png";
         break;
+    case ICON_SOURCE_SKIP:
+        iconfile = ":/img/skip.png";
+        break;
     default:
         return;
     }
-    QTreeWidgetItem *top = tree->topLevelItem(type);
-    for(int i = 0; i < top->childCount(); i++) {
-        QTreeWidgetItem *item = top->child(i);
-        if(item->data(0, Qt::UserRole).toInt() == test) {
-            item->setIcon(1, QIcon(iconfile));
-            if(i == top->childCount()-1 && icon != ICON_SOURCE_RUN) {
-                emit sig_finished();
+    QTreeWidgetItem *last_top = tree->topLevelItem(tree->topLevelItemCount()-1);
+    QTreeWidgetItem *back_item = last_top->child(last_top->childCount() - 1);
+    for(int i = 0; i < tree->topLevelItemCount(); i++) {
+        QTreeWidgetItem *top = tree->topLevelItem(i);
+        for(int j = 0; j < top->childCount(); j++) {
+            QTreeWidgetItem *item = top->child(j);
+            if(item->data(0, Qt::UserRole).toUInt() == test) {
+                item->setIcon(1, QIcon(iconfile));
+                if(item == back_item && icon != ICON_SOURCE_RUN) {
+                    emit sig_finished();
+                }
             }
         }
     }
@@ -147,6 +171,11 @@ void TaskWidget::on_recv_test_status(QByteArray payload)
         } else {
             setIcon(test, ICON_SOURCE_FAIL);
         }
+    } else if(3 == status) {
+        setIcon(test, ICON_SOURCE_SKIP);
+        edit->set_current_edit_key(test);
+        cur_run_test = test;
+
     }
 }
 

@@ -8,7 +8,7 @@
 QVector<uint16_t> ChooseDialog::s_entries;
 QStringList ChooseDialog::s_function = QStringList()<< "模组插拔事件" << "查询模组信息" << "查询模组槽位信息"
                        << "查询模组插拔状态" << "模组复位" << "模组重启"
-                       << "文件传输" << "异常模块处理" << "模组对时";
+                       << "文件传输" << "异常模块处理" << "模组对时" << "查询全部模组信息";
 QStringList ChooseDialog::s_performance = QStringList()<<"并发请求" << "快速插拔模组" << "响应时间";
 QStringList ChooseDialog::s_compatibility = QStringList()<< "共存性" << "互换性" << "配置文件读取" << "驱动接口兼容";
 QStringList ChooseDialog::s_interface = QStringList()<< "通用消息接口" << "系统管理器消息接口" << "模组管理接口";
